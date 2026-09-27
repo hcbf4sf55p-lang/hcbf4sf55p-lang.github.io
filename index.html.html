@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>德扑高手训练桌</title>
+<style>
+:root{--bg:#07111b;--panel:#0d1b28;--line:#253a4d;--muted:#91a6bb;--gold:#e3b75b;--green:#123d2d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:#f4f7fb;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+.app{max-width:520px;margin:auto;min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+header{padding:calc(10px + env(safe-area-inset-top)) 14px 10px;display:flex;justify-content:space-between;align-items:center}
+h1{font-size:18px;margin:0}.small{font-size:11px;color:var(--muted)}
+.chip{border:1px solid var(--line);border-radius:20px;padding:7px 9px;font-size:11px}
+.table{height:535px;margin:0 8px;position:relative;border:8px solid #263441;border-radius:30px;background:radial-gradient(circle,#1c7049,#0b402d 58%,#062519);overflow:hidden;box-shadow:0 15px 45px #0008}
+.pot{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:1}.pot b{font-size:19px}.board{display:flex;gap:5px;margin-top:8px}
+.card{width:39px;height:54px;border-radius:6px;background:#fff;color:#17202a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;box-shadow:0 2px 5px #0006}.red{color:#c52c2c}.back{background:repeating-linear-gradient(45deg,#263d59,#263d59 5px,#3a5879 5px,#3a5879 10px);color:#dbe8ff}
+.seat{position:absolute;width:112px;min-height:62px;padding:6px 7px;border:1px solid #385069;border-radius:9px;background:#091522ee;z-index:3;box-shadow:0 4px 12px #0006}.seat.hero{border-color:var(--gold);box-shadow:0 0 0 1px #e3b75b55}.seat.fold{opacity:.38}
+.name{font-size:12px;font-weight:800}.stack{float:right;font-size:11px;color:#b7d4c0}.style{font-size:9px;color:#91a6bb;margin-top:2px}.hole{display:flex;gap:3px;margin-top:5px}.mini{width:27px;height:36px;font-size:12px;border-radius:4px}
+.a{left:50%;bottom:8px;transform:translateX(-50%)}.b{left:2px;bottom:90px}.c{left:2px;top:205px}.d{left:50%;top:8px;transform:translateX(-50%)}.e{right:2px;top:205px}.f{right:2px;bottom:90px}.g{left:14%;top:72px}.h{right:14%;top:72px}
+.actions{padding:9px 10px 5px;background:#08131e}.actions .row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:7px}.btn{border:0;border-radius:10px;padding:12px 4px;background:#22394e;color:#fff;font-weight:800;font-size:13px}.btn.gold{background:#a87520}.btn.red{background:#74313b}.btn:disabled{opacity:.35}
+.raise{display:flex;gap:7px;margin-top:7px}.raise input{width:100%;border:1px solid var(--line);border-radius:9px;background:#0d1b28;color:white;padding:10px;font-size:14px}.raise button{flex:1}
+.panel{margin:8px 10px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:11px}.title{font-size:13px;font-weight:800;margin-bottom:7px}.coach{font-size:12px;line-height:1.55;color:#d7e1ec}.tag{display:inline-block;padding:2px 5px;border-radius:4px;background:#17334a;color:#a9d1ef;font-size:10px}.good{color:#86d6a1}.warn{color:#efc76d}.bad{color:#f08e99}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.stat{text-align:center;background:#08131e;border-radius:7px;padding:7px 2px}.stat b{font-size:14px;display:block}.stat span{font-size:9px;color:var(--muted)}
+.log{font-size:10px;line-height:1.5;color:#a9b9c9;max-height:110px;overflow:auto}
+.next{width:100%;margin-top:8px;background:#183f31}.hidden{display:none}
+@media(min-width:521px){body{padding:15px}.app{border:1px solid #182b3c;border-radius:20px;overflow:hidden}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><h1>♠ 德扑高手训练桌</h1><div class="small">8人 · No-Limit Hold'em · 训练筹码</div></div><div class="chip" id="street">PRE-FLOP</div></header>
+<div class="table" id="table"><div class="pot"><div>底池 <b id="pot">15</b> BB</div><div class="board" id="board"></div></div></div>
+<div class="actions">
+<div class="row">
+<button class="btn red" id="fold">弃牌</button><button class="btn" id="check">过牌</button><button class="btn" id="call">跟注</button><button class="btn gold" id="raiseBtn">加注</button>
+</div>
+<div class="raise"><input id="raiseAmt" type="number" min="2.5" step="0.5" value="7.5"><button class="btn" id="allin">全下</button></div>
+</div>
+<div class="panel"><div class="title">🧠 高手教练</div><div class="coach" id="coach">先独立思考。这里不会在你行动前告诉你“标准答案”。</div></div>
+<div class="panel"><div class="title">📊 你的训练数据</div><div class="stats">
+<div class="stat"><b id="hands">0</b><span>手数</span></div><div class="stat"><b id="vpip">0%</b><span>VPIP</span></div><div class="stat"><b id="pfr">0%</b><span>PFR</span></div><div class="stat"><b id="bank">100</b><span>筹码BB</span></div>
+</div></div>
+<div class="panel"><div class="title">📜 行动记录</div><div class="log" id="log"></div><button class="btn next hidden" id="next">下一手</button></div>
+</div>
+<script>
+const suits=['♠','♥','♦','♣'], ranks=['2','3','4','5','6','7','8','9','T','J','Q','K','A'];
+const specs=[['你','HERO'],['Alex','TAG高手'],['Mia','GTO型'],['Leo','LAG高手'],['Nora','紧手高手'],['Sam','诈唬高手'],['Kai','跟注型'],['Vera','均衡型']];
+let deck=[],board=[],players=[],street='preflop',pot=15,currentBet=2.5,hand=0,heroActed=false;
+let data={vpip:0,pfr:0,bank:100,hands:0};
+function shuffle(a){return a.sort(()=>Math.random()-.5)}
+function newDeck(){return shuffle(suits.flatMap(s=>ranks.map(r=>r+s)))}
+function C(c,small=false){return `<div class="card ${/[♥♦]/.test(c)?'red':''} ${small?'mini':''}">${c}</div>`}
+function draw(){return deck.pop()}
+function log(t){let x=document.getElementById('log');x.innerHTML+=t+'<br>';x.scrollTop=x.scrollHeight}
+function render(){
+document.getElementById('pot').textContent=pot.toFixed(1);document.getElementById('street').textContent=street.toUpperCase();
+document.getElementById('board').innerHTML=board.map(c=>C(c)).join('');
+document.querySelectorAll('.seat').forEach(x=>x.remove());
+players.forEach((p,i)=>{let e=document.createElement('div');e.className='seat '+['a','b','c','d','e','f','g','h'][i]+(i===0?' hero':'')+(p.fold?' fold':'');
+e.innerHTML=`<span class="name">${p.name}</span><span class="stack">${p.stack.toFixed(1)}BB</span><div class="style">${i===0?'你的底牌':p.style}</div><div class="hole">${p.fold?'':p.cards.map(c=>C(c,true)).join('')}</div>`;document.getElementById('table').appendChild(e)});
+document.getElementById('bank').textContent=data.bank.toFixed(1);document.getElementById('hands').textContent=data.hands;
+document.getElementById('vpip').textContent=Math.round(data.vpip/Math.max(1,data.hands)*100)+'%';document.getElementById('pfr').textContent=Math.round(data.pfr/Math.max(1,data.hands)*100)+'%';
+}
+function start(){
+deck=newDeck();board=[];street='preflop';pot=15;currentBet=2.5;heroActed=false;data.hands++;
+players=specs.map((s,i)=>({name:s[0],style:s[1],stack:i?100: data.bank,cards:[draw(),draw()],fold:false}));
+data.bank=players[0].stack;render();log(`<b>第 ${data.hands} 手</b> · 盲注 0.5/1BB · 你在 BTN 附近位置`);log(`你的底牌：<b>${players[0].cards.join(' ')}</b>`);botPreflop();render();
+document.getElementById('coach').innerHTML='你的行动前不会显示建议。先观察：<b>位置、有效筹码、前位行动、对手类型、自己的起手牌范围。</b>';
+document.getElementById('next').classList.add('hidden');setButtons(true);
+}
+function botPreflop(){
+players.slice(1).forEach((p,i)=>{let r=Math.random(),fold=(r<({TAG高手:.24,'GTO型':.25,'LAG高手':.16,'紧手高手':.35,'诈唬高手':.18,'跟注型':.10,'均衡型':.24}[p.style]||.24));
+if(fold){p.fold=true;log(`${p.name}（${p.style}）弃牌`)}else if(r>.76){let n=2.5+Math.random()*2.5;p.stack-=n;p.stack=Math.max(0,p.stack);pot+=n;currentBet=Math.max(currentBet,n);log(`${p.name} 加注 ${n.toFixed(1)}BB`)}else{pot+=Math.min(1,p.stack);p.stack-=Math.min(1,p.stack);log(`${p.name} 跟注/补盲`)}})}
+function strength(){
+let rs=players[0].cards.map(c=>ranks.indexOf(c[0])+2).sort((a,b)=>b-a), hi=rs[0],lo=rs[1],pair=hi===lo,suited=players[0].cards[0][1]===players[0].cards[1][1];
+let score=hi+lo+(pair?35:0)+(suited?5:0);board.forEach(c=>{let r=ranks.indexOf(c[0])+2;if(r===hi||r===lo)score+=7});return score
+}
+function action(type){
+if(heroActed||street==='done')return;heroActed=true;let n=Number(document.getElementById('raiseAmt').value)||7.5;
+if(type==='fold'){players[0].fold=true;data.bank-=1;log('<b>你弃牌。</b>');review('fold',0);end();}
+else if(type==='check'){log('<b>你过牌。</b>');review('check',0);advance();}
+else if(type==='call'){let cost=Math.max(1,currentBet);players[0].stack-=cost;pot+=cost;data.bank=players[0].stack;data.vpip++;log(`<b>你跟注 ${cost.toFixed(1)}BB。</b>`);review('call',cost);advance();}
+else if(type==='raise'){let cost=Math.max(currentBet+2.5,n);players[0].stack-=cost;pot+=cost;data.bank=players[0].stack;data.vpip++;data.pfr++;log(`<b>你加注到 ${cost.toFixed(1)}BB。</b>`);review('raise',cost);advance();}
+else{let cost=players[0].stack;pot+=cost;players[0].stack=0;data.bank=0;data.vpip++;data.pfr++;log('<b>你全下。</b>');review('allin',cost);advance()}
+render();
+}
+function review(a,amt){
+let s=strength(),pair=players[0].cards[0][0]===players[0].cards[1][0],hi=Math.max(...players[0].cards.map(c=>ranks.indexOf(c[0])+2));
+let msg='<span class="tag">决策复盘</span> ';
+if(a==='fold')msg+=s>=55?'<span class="warn">这手牌可能值得继续观察。弃牌不一定错误，但要检查你是否因为害怕亏损而过度弃牌。</span>':'<span class="good">纪律性弃牌。训练重点是避免用边缘牌被动投入筹码。</span>';
+if(a==='call')msg+=s>=55?'<span class="good">跟注有继续价值。下一步重点看位置、对手范围和翻牌后的后门权益。</span>':'<span class="warn">这类跟注最容易形成“跟注站”习惯。问自己：我跟注后，哪些更差的牌会继续输给我？</span>';
+if(a==='raise')msg+=(pair||hi>=13)?'<span class="good">强势牌加注具备价值下注逻辑。注意不要只按自己的牌力下注，要考虑对手继续范围。</span>':'<span class="warn">边缘牌加注要有明确目的：价值、隔离还是诈唬？没有目的时，小幅加注往往只是把底池做大。</span>';
+if(a==='check')msg+='<span class="good">过牌可以保留底池大小并控制波动。检查你是否错过了可价值下注的牌。</span>';
+if(a==='allin')msg+='<span class="warn">全下是高承诺动作。高手会先问：有哪些更差的牌会跟？有哪些更好的牌会弃？</span>';
+document.getElementById('coach').innerHTML=msg;
+}
+function advance(){
+if(street==='preflop'){board.push(draw(),draw(),draw());street='flop';botStreet();heroActed=false;document.getElementById('coach').innerHTML='<span class="tag">FLOP</span> 重新评估：公共牌如何改变你和对手的范围？';}
+else if(street==='flop'){board.push(draw());street='turn';botStreet();heroActed=false;document.getElementById('coach').innerHTML='<span class="tag">TURN</span> 范围通常开始收窄。问自己：哪些价值牌、听牌和诈唬仍然合理？';}
+else if(street==='turn'){board.push(draw());street='river';botStreet();heroActed=false;document.getElementById('coach').innerHTML='<span class="tag">RIVER</span> 最后一街：下注前先明确你是在价值下注还是诈唬。';}
+else showdown();render();
+}
+function botStreet(){players.filter(p=>!p.fold&&p!==players[0]).forEach(p=>{let r=Math.random();if(r<.12){p.fold=true;log(`${p.name} 弃牌`)}else if(r>.73){let n=3+Math.random()*7;p.stack-=Math.min(p.stack,n);pot+=Math.min(p.stack+n,n);log(`${p.name} 下注 ${n.toFixed(1)}BB`)}else log(`${p.name} 过牌/跟注`)})}
+function showdown(){
+street='done';let live=players.filter(p=>!p.fold),win=Math.random()<.42;let before=pot;
+if(win){data.bank+=pot;players[0].stack=data.bank;log(`<b>摊牌：你赢得 ${before.toFixed(1)}BB。</b>`)}else log(`<b>摊牌：你没有赢下底池。</b>`);
+document.getElementById('coach').innerHTML=`<span class="${win?'good':'warn'}">${win?'结果：赢下底池。':'结果：本手未赢。'}</span> <b>不要用输赢评价单手决策。</b>真正要复盘的是：你的范围、下注尺度、Pot Odds，以及对手可能持有的组合。`;
+document.getElementById('next').classList.remove('hidden');setButtons(false);
+}
+function end(){street='done';document.getElementById('next').classList.remove('hidden');setButtons(false);render()}
+function setButtons(on){['fold','check','call','raiseBtn','allin'].forEach(id=>document.getElementById(id).disabled=!on)}
+document.getElementById('fold').onclick=()=>action('fold');document.getElementById('check').onclick=()=>action('check');document.getElementById('call').onclick=()=>action('call');document.getElementById('raiseBtn').onclick=()=>action('raise');document.getElementById('allin').onclick=()=>action('allin');document.getElementById('next').onclick=start;
+start();
+</script>
+</body></html>
